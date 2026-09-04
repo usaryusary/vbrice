@@ -17,6 +17,7 @@ From this moment, i'll try to comment the code and also make it more readable.
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@ From this moment, i'll try to comment the code and also make it more readable.
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <X11/extensions/shape.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #ifdef XINERAMA
@@ -1429,6 +1431,7 @@ movemouse(const Arg *arg)
 	restack(selmon);
 	ocx = c->x;
 	ocy = c->y;
+	float lerp_x = ocx, lerp_y = ocy;
 	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
 		None, cursor[CurMove]->cursor, CurrentTime) != GrabSuccess)
 		return;
@@ -1506,8 +1509,11 @@ movemouse(const Arg *arg)
 			&& (abs(nx - c->x) > snap || abs(ny - c->y) > snap))
 				togglefloating(NULL);
 #endif
-			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
-				resize(c, nx, ny, c->w, c->h, 1);
+			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating) {
+				lerp_x += (nx - lerp_x) * 0.15f;
+				lerp_y += (ny - lerp_y) * 0.15f;
+				resize(c, (int)lerp_x, (int)lerp_y, c->w, c->h, 1);
+			}
 			break;
 		}
 	} while (ev.type != ButtonRelease);
@@ -1650,6 +1656,7 @@ resizemouse(const Arg *arg)
 	restack(selmon);
 	ocx = c->x;
 	ocy = c->y;
+	float lerp_x = ocx, lerp_y = ocy;
 	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
 		None, cursor[CurResize]->cursor, CurrentTime) != GrabSuccess)
 		return;
@@ -1946,7 +1953,7 @@ setlayout(const Arg *arg)
 
     strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol - 1);
     selmon->ltsymbol[sizeof selmon->ltsymbol - 1] = '\0';
-    arrange(selmon);
+    animate_clients_to_pos();
 }
 /* arg > 1.0 will set mfact absolutely */
 void
@@ -2777,7 +2784,27 @@ swapmaster(const Arg *arg)
 		return;
 	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
 		return;
+	/* сохраняем позиции до pop */
+	int _n = 0;
+	Client *_cl;
+	for (_cl = selmon->clients; _cl; _cl = _cl->next)
+		if (ISVISIBLE(_cl)) _n++;
+	Client **_clients = calloc(_n, sizeof(Client*));
+	int *_sx = calloc(_n, sizeof(int));
+	int *_sy = calloc(_n, sizeof(int));
+	int *_sw = calloc(_n, sizeof(int));
+	int *_sh = calloc(_n, sizeof(int));
+	int _i = 0;
+	for (_cl = selmon->clients; _cl; _cl = _cl->next) {
+		if (!ISVISIBLE(_cl)) continue;
+		_clients[_i] = _cl;
+		_sx[_i] = _cl->x; _sy[_i] = _cl->y;
+		_sw[_i] = _cl->w; _sh[_i] = _cl->h;
+		_i++;
+	}
 	pop(c);
+	animate_clients_after_arrange(_n, _clients, _sx, _sy, _sw, _sh);
+	free(_clients); free(_sx); free(_sy); free(_sw); free(_sh);
 #if WARP_TO_CLIENT && WARP_TO_CENTER_OF_SWAPMASTERED_WINDOW
   warptoclient(target);
 #endif
@@ -2822,3 +2849,30 @@ main(int argc, char *argv[])
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
 }
+#define CORNER_RADIUS 18
+
+static void
+apply_rounded_corners(Display *d, Window win, int w, int h) {
+    int r = CORNER_RADIUS;
+    if (w < r*2 || h < r*2) return;
+    Pixmap mask = XCreatePixmap(d, win, w, h, 1);
+    GC gc = XCreateGC(d, mask, 0, NULL);
+    /* заполняем чёрным (прозрачно) */
+    XSetForeground(d, gc, 0);
+    XFillRectangle(d, mask, gc, 0, 0, w, h);
+    /* рисуем белым (непрозрачно) */
+    XSetForeground(d, gc, 1);
+    /* центральный прямоугольник */
+    XFillRectangle(d, mask, gc, r, 0, w - r*2, h);
+    XFillRectangle(d, mask, gc, 0, r, w, h - r*2);
+    /* 4 угла */
+    XFillArc(d, mask, gc, 0,     0,     r*2, r*2, 0, 360*64);
+    XFillArc(d, mask, gc, w-r*2, 0,     r*2, r*2, 0, 360*64);
+    XFillArc(d, mask, gc, 0,     h-r*2, r*2, r*2, 0, 360*64);
+    XFillArc(d, mask, gc, w-r*2, h-r*2, r*2, r*2, 0, 360*64);
+    XShapeCombineMask(d, win, ShapeBounding, 0, 0, mask, ShapeSet);
+    XFreeGC(d, gc);
+    XFreePixmap(d, mask);
+}
+
+

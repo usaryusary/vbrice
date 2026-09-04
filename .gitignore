@@ -1,5 +1,8 @@
 *.o
-config.h
-modules.h
 vxwm
+config.h.backup
+config.h.bak
+config.h.broken
+config.h.save
 *.tar.gz
+*.py

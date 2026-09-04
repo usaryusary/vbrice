@@ -22,7 +22,7 @@ Even though this sounds complex, it is actually pretty lightweight, and is very 
  
  */
 #define IT_SHOW_COORDINATES_IN_BAR 1 // Shows your coordinates in the bar, pretty impossible to use infinite tags without this.
-#define ZOOM 1 // Zoom integration, requires vcompmgr installed and running.
+#define ZOOM 0 // Off: we use picom (not vcompmgr). Re-enable only if you build/run vcompmgr.
 
 
 /* Move/Resize */
@@ -43,7 +43,7 @@ Even though this sounds complex, it is actually pretty lightweight, and is very 
 
 /* Tagging */
 #define TAG_TO_TAG 1 // If you switch to tag where you already are, it'll switch to previous tag.
-#define SLOWER_TAGS_ANIMATION 0 // This slows down tags animation speed, which results in smoother tags animations (requires picom to see any difference).
+#define SLOWER_TAGS_ANIMATION 1 // This slows down tags animation speed, which results in smoother tags animations (requires picom to see any difference).
 #define WINDOWMAP 1
 /* This makes the windows get mapped or unmapped in X11. This results in certain
    behaviour being enabled, some examples are: fix issues with some applications 
