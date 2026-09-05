@@ -2574,8 +2574,11 @@ updatesizehints(Client *c)
 void
 updatestatus(void)
 {
-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
-		stext[0] = '\0';
+	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext))) {
+		time_t now = time(NULL);
+		struct tm *tm = localtime(&now);
+		strftime(stext, sizeof(stext), "%H:%M %d.%m", tm);
+	}
 	drawbar(selmon);
 }
 
