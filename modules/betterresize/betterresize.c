@@ -12,6 +12,10 @@ resizemouse(const Arg *arg)
 
     restack(selmon);
 
+#if ZOOM
+    float zoom_val = zoom_value();
+#endif
+
     int orig_x = c->x;
     int orig_y = c->y;
     int orig_w = c->w;
@@ -53,8 +57,13 @@ resizemouse(const Arg *arg)
                 continue;
             lasttime = ev.xmotion.time;
 #endif
+#if ZOOM
+            int dx = (int)((ev.xmotion.x_root - (orig_x + rx)) / zoom_val);
+            int dy = (int)((ev.xmotion.y_root - (orig_y + ry)) / zoom_val);
+#else
             int dx = ev.xmotion.x_root - (orig_x + rx);
             int dy = ev.xmotion.y_root - (orig_y + ry);
+#endif
 
             int nx = orig_x;
             int ny = orig_y;

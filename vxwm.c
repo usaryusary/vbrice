@@ -1470,11 +1470,24 @@ movemouse(const Arg *arg)
 					selmon = m;
 					focus(NULL);
 				}
+#if ZOOM
+				{
+					double _cx = sw / 2.0, _cy = sh / 2.0;
+					double _sx = (ev.xmotion.x_root - _cx) / zoom_val + _cx;
+					double _sy = (ev.xmotion.y_root - _cy) / zoom_val + _cy;
+					for (cc = c->mon->clients; cc; cc = cc->next)
+						if (cc != c && !cc->isfloating && ISVISIBLE(cc)
+						&& _sx > cc->x && _sx < cc->x + cc->w
+						&& _sy > cc->y && _sy < cc->y + cc->h)
+							break;
+				}
+#else
 				for (cc = c->mon->clients; cc; cc = cc->next)
 					if (cc != c && !cc->isfloating && ISVISIBLE(cc)
 					&& ev.xmotion.x_root > cc->x && ev.xmotion.x_root < cc->x + cc->w
 					&& ev.xmotion.y_root > cc->y && ev.xmotion.y_root < cc->y + cc->h)
 						break;
+#endif
 				if (cc) {
 					Client *ps = NULL, *pf = NULL;
 					for (p = c->mon->clients; p; p = p->next) {

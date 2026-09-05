@@ -821,8 +821,6 @@ zoom_present(Display *dpy)
 	for (win *ww = list; ww; ww = ww->next) wins[n++] = ww;
 
 	for (int i = n - 1; i >= 0; i--) {
-        fprintf(stderr, "DEBUG fullscreen win=0x%lx mode=%d opacity=%u alpha=%lu
-", w->id, w->mode, w->opacity, w->alphaPict);
 		win *ww = wins[i];
 		if (ww->a.map_state != IsViewable && !find_fade(ww))
 			continue;
