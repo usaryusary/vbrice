@@ -350,6 +350,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static int last_minute = -1;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -1774,11 +1775,23 @@ void
 run(void)
 {
 	XEvent ev;
+	struct tm *tm;
+	time_t now;
+	int cur_minute;
 	/* main event loop */
 	XSync(dpy, False);
-	while (running && !XNextEvent(dpy, &ev))
+	while (running && !XNextEvent(dpy, &ev)) {
 		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+		/* update time/date if minute changed */
+		now = time(NULL);
+		tm = localtime(&now);
+		cur_minute = tm->tm_min;
+		if (cur_minute != last_minute) {
+			last_minute = cur_minute;
+			updatestatus();
+		}
+	}
 }
 
 void
