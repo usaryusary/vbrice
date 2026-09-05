@@ -151,6 +151,7 @@ static const Key keys[] = {
 { ALTERNATE_MODKEY|ShiftMask, XK_Tab, focuscenter, {.i = -1} },
 { MODKEY, XK_q, spawn, {.v = termcmd} },
 { MODKEY, XK_e, spawn, {.v = filemanagercmd} },
+{ MODKEY, XK_x, spawn, {.v = dmenucmd} },
 { MODKEY, XK_c, killclient, {0} },
 { MODKEY, XK_f, togglefullscr, {0} },
 { MODKEY, XK_g, setlayout, {0} },
