@@ -725,6 +725,18 @@ zoom_write_state(double target)
 }
 
 static void
+zoom_write_current_factor(void)
+{
+	char path[140];
+	snprintf(path, sizeof(path), "%s.zoom", zoom_socket_path);
+	FILE *f = fopen(path, "w");
+	if (f) {
+		fprintf(f, "%g\n", zoom_factor);
+		fclose(f);
+	}
+}
+
+static void
 zoom_start_animation(double target)
 {
 	pthread_mutex_lock(&zoom_mutex);
@@ -765,6 +777,7 @@ zoom_anim_thread(void *arg __attribute__((unused)))
 			}
 		}
 		pthread_mutex_unlock(&zoom_mutex);
+		zoom_write_current_factor();
 		if (zoom_pipe[1] >= 0) {
 			char b = 1;
 			write(zoom_pipe[1], &b, 1);

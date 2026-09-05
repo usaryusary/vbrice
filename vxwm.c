@@ -526,6 +526,9 @@ buttonpress(XEvent *e)
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
+#if ZOOM
+	float zoom_val = zoom_value();
+#endif
 
 	click = ClkRootWin;
 	/* focus monitor if necessary */
@@ -559,12 +562,28 @@ buttonpress(XEvent *e)
 			click = ClkStatusText;
 		else
 			click = ClkWinTitle;
-	} else if ((c = wintoclient(ev->window))) {
-		focus(c);
-		restack(selmon);
-		if (ev->button != Button4 && ev->button != Button5)
-			XAllowEvents(dpy, ReplayPointer, CurrentTime);
-		click = ClkClientWin;
+	} else {
+		c = NULL;
+#if ZOOM
+		if (zoom_val > 1.0f) {
+			double cx = sw / 2.0;
+			double cy = sh / 2.0;
+			double sx = (ev->x_root - cx) / zoom_val + cx;
+			double sy = (ev->y_root - cy) / zoom_val + cy;
+			c = clientat(sx, sy);
+		} else {
+			c = wintoclient(ev->window);
+		}
+#else
+		c = wintoclient(ev->window);
+#endif
+		if (c) {
+			focus(c);
+			restack(selmon);
+			if (ev->button != Button4 && ev->button != Button5)
+				XAllowEvents(dpy, ReplayPointer, CurrentTime);
+			click = ClkClientWin;
+		}
 	}
 	for (i = 0; i < LENGTH(buttons); i++)
 		if (click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
@@ -949,10 +968,25 @@ enternotify(XEvent *e)
 	Client *c;
 	Monitor *m;
 	XCrossingEvent *ev = &e->xcrossing;
+#if ZOOM
+	float zoom_val = zoom_value();
+#endif
 
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
+#if ZOOM
+	if (zoom_val > 1.0f) {
+		double cx = sw / 2.0;
+		double cy = sh / 2.0;
+		double sx = (ev->x_root - cx) / zoom_val + cx;
+		double sy = (ev->y_root - cy) / zoom_val + cy;
+		c = clientat(sx, sy);
+	} else {
+		c = wintoclient(ev->window);
+	}
+#else
 	c = wintoclient(ev->window);
+#endif
 	m = c ? c->mon : wintomon(ev->window);
 	if (m != selmon) {
 		unfocus(selmon->sel, 1);
@@ -1419,9 +1453,6 @@ movemouse(const Arg *arg)
 #if LOCK_MOVE_RESIZE_REFRESH_RATE
 	Time lasttime = 0;
 #endif
-#if ZOOM
-  float zoom_val = zoom_value();
-#endif
 
 	if (!(c = selmon->sel) || c->isfullscreen)
 		return;
@@ -1447,6 +1478,9 @@ movemouse(const Arg *arg)
 			if ((ev.xmotion.time - lasttime) <= (1000 / refreshrate))
 				continue;
 			lasttime = ev.xmotion.time;
+#endif
+#if ZOOM
+			float zoom_val = zoom_value();
 #endif
 #if !ZOOM
 			nx = ocx + (ev.xmotion.x - x);
@@ -2743,6 +2777,27 @@ wintoclient(Window w)
 				return c;
 	return NULL;
 }
+
+#if ZOOM
+Client *
+clientat(double sx, double sy)
+{
+	Client *c;
+	Monitor *m;
+
+	/* iterate in reverse stacking order to find topmost */
+	for (m = mons; m; m = m->next) {
+		for (c = m->stack; c; c = c->snext) {
+			if (!ISVISIBLE(c))
+				continue;
+			if (sx >= c->x && sx < c->x + c->w &&
+			    sy >= c->y && sy < c->y + c->h)
+				return c;
+		}
+	}
+	return NULL;
+}
+#endif
 
 Monitor *
 wintomon(Window w)
