@@ -16,7 +16,7 @@ static MAYBE_CONST char normbordercolor[]       = "#222222";
 static MAYBE_CONST char normfgcolor[]           = "#bbbbbb";
 static MAYBE_CONST char selfgcolor[]            = "#eeeeee";
 static MAYBE_CONST char selbordercolor[]        = "#e6e6e6";
-static MAYBE_CONST char selbgcolor[]            = "#005577";
+static MAYBE_CONST char selbgcolor[]            = "#9e9e9e";
 static MAYBE_CONST char *colors[][3] = {
        /*               fg           bg           border   */
        [SchemeNorm] = { normfgcolor, normbgcolor, normbordercolor },
