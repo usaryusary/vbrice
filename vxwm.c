@@ -882,10 +882,6 @@ drawbar(Monitor *m)
 		x += w;
 	}
 
-	w = TEXTW(m->ltsymbol);
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
-
 #if INFINITE_TAGS && IT_SHOW_COORDINATES_IN_BAR
 
   #if COORDINATES_DIVISOR <= 0
@@ -2579,7 +2575,7 @@ void
 updatestatus(void)
 {
 	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
-		strcpy(stext, "vxwm-"VERSION);
+		stext[0] = '\0';
 	drawbar(selmon);
 }
 

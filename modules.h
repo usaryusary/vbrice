@@ -21,7 +21,7 @@ Lost? Hit the "homecanvas" keybind to snap your view back to the start.
 Even though this sounds complex, it is actually pretty lightweight, and is very easy to use.
  
  */
-#define IT_SHOW_COORDINATES_IN_BAR 1 // Shows your coordinates in the bar, pretty impossible to use infinite tags without this.
+#define IT_SHOW_COORDINATES_IN_BAR 0 // Shows your coordinates in the bar, pretty impossible to use infinite tags without this.
 #define ZOOM 0 // Off: we use picom (not vcompmgr). Re-enable only if you build/run vcompmgr.
 
 
